@@ -13,12 +13,12 @@ def quantization(pixels, bins,range_):
 
            
     return pixels
-def visualise(depth_map):
-    depth_map = quantization(depth_map,255,[depth_map.min(),depth_map.max()]).astype(np.uint8)
+def visualise(depth_map,name):
+    d = copy.deepcopy(depth_map)
+    d = quantization(d,255,[d.min(),d.max()]).astype(np.uint8)
 
-    depth_map = cv2.applyColorMap(depth_map, cv2.COLORMAP_HOT)
-    cv2.imshow("Hazy",depth_map)
-    cv2.waitKey(0)
+    d = cv2.applyColorMap(d, cv2.COLORMAP_HOT)
+    cv2.imwrite("./output/"+name+".jpg",d)
 
 def relu(x):
     if x<0:
@@ -31,8 +31,30 @@ def reverse_relu(bound,x):
     else:
         return x
 
+def guided_filter(image, g_image, eps = 0):
+    blur_factor = (50,50)
+    mean_i = cv2.blur(image,blur_factor)
+    mean_g = cv2.blur(g_image,blur_factor)
+
+    corr_gi = cv2.blur(g_image*image,blur_factor)
+    corr_gg = cv2.blur(g_image*g_image,blur_factor)
+
+    var_g = corr_gg - mean_g*mean_g
+    cov_gi = corr_gi - mean_g*mean_i
+
+    a = cov_gi / (var_g + eps)
+    b = mean_i - (a*mean_g)
+
+    mean_a = cv2.blur(a,blur_factor)
+    mean_b = cv2.blur(b,blur_factor)
+
+    q = mean_a * g_image + mean_b
+
+    return q
+
 # Variables
-filename = "./images/forest.jpg"
+filename = "./images/singapore.jpg"
+noise = 0 # guided filter, eps
 
 theta0 = 0.121779
 theta1 = 0.959710
@@ -50,6 +72,8 @@ saturation = hsv[:,:,1].astype('float')/255 # Saturation values of image
 
 depth_map = theta0 + theta1*value + theta2*saturation + np.random.normal(0,sigma, hsv[:,:,0].shape)
 
+visualise(depth_map,"1_depth_map")
+
 new_depth_map = copy.deepcopy(depth_map) # min filtered depth  map
 
 width = depth_map.shape[1]
@@ -63,11 +87,13 @@ for i in range(height):
         y_high =  reverse_relu(width-1,j+n_size)+1
         new_depth_map[i][j] = np.min( depth_map[x_low:x_high,y_low:y_high] )
 
-# visualise(new_depth_map)
+visualise(new_depth_map,"2_min_filter_depth_map")
 
-blurred_depth_map = cv2.GaussianBlur(new_depth_map,(blur_strength,blur_strength),0) # Gaussian blur of depthmap (d(x))
+# blurred_depth_map = cv2.GaussianBlur(new_depth_map,(blur_strength,blur_strength),0) # Gaussian blur of depthmap (d(x))
 
-# visualise(blurred_depth_map)
+blurred_depth_map = guided_filter(new_depth_map,depth_map,noise)
+
+visualise(blurred_depth_map,"3_blurred_depth_map")
 
 
 depth_map_1d = np.ravel(blurred_depth_map)
