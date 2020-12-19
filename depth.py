@@ -66,5 +66,9 @@ for i in range(width):
         new_depth_map[i][j] = np.min( depth_map[x_low:x_high,y_low:y_high] )
 
 visualise(new_depth_map)
+
 new_depth_map = cv2.GaussianBlur(new_depth_map,(blur_strength,blur_strength),0)
+
 visualise(new_depth_map)
+
+
