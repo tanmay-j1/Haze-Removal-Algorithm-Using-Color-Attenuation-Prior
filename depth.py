@@ -53,7 +53,7 @@ def guided_filter(image, g_image, eps = 0):
     return q
 
 # Variables
-filename = "./images/singapore.jpg"
+filename = "./images/mountains.jpeg"
 noise = 0 # guided filter, eps
 
 theta0 = 0.121779
