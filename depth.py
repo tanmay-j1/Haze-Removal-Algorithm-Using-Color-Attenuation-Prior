@@ -53,8 +53,9 @@ def guided_filter(image, g_image, eps = 0):
     return q
 
 # Variables
-filename = "./images/mountains.jpeg"
+filename = "./images/bridge.jpg"
 noise = 0 # guided filter, eps
+beta = 1 #dehazing strength
 
 theta0 = 0.121779
 theta1 = 0.959710
@@ -116,7 +117,6 @@ for x in range(len(indices_image_rows)):
         atmospheric_light = h_img[i][j]
         intensity = value[i][j]
 
-beta = 1
 
 # Calculating output image
 
